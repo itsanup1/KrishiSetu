@@ -1,0 +1,206 @@
+# Krishisetu — Final Project Blueprint
+
+*Agri-input marketplace + equipment rental platform for Indian farmers*
+*Semester project · Team of 4 · 8–10 weeks · Beginner team, learning as they build*
+
+---
+
+## 1. Final Problem Definition
+
+Small and marginal farmers in India face two separate, well-documented frictions:
+
+1. **Input access** — buying seeds, fertilizer, and pesticides through local dealers, with no easy way to compare prices, brands, or availability across sellers.
+2. **Equipment access** — owning machinery like tractors or tillers is uneconomical for most small farms because usage is highly seasonal (intense demand at sowing/harvesting, idle otherwise). Renting is common but informal — arranged by phone call, with no standardized booking, pricing, or fairness when multiple farmers want the same machine in the same week.
+
+Krishisetu solves both with one platform: an **input marketplace** (farmers buy from vendors) and an **equipment rental module** where equipment can come from individual farmers renting out idle machinery (C2C) *or* a dealer/fleet account (B2C) — with a fair, automated **FCFS queue + 24-hour confirmation window** replacing the informal "whoever calls first" system.
+
+This is a scoped **student build**, not a commercial launch — pan-India in concept, generic rather than hyperlocal, deployed live for demonstration and evaluation.
+
+## 2. Target Users & Roles
+
+| Role | Description |
+|---|---|
+| **Farmer** | Primary user. Buys inputs from vendors. Can also list their own equipment for rent (C2C) and/or book equipment from others. |
+| **Vendor** | Sells agricultural inputs (seeds, fertilizer, pesticides) through the marketplace. |
+| **Equipment Owner** | Lists equipment for rent — either an individual farmer (same account type as Farmer, dual capability) or a dealer/fleet operator with multiple machines. |
+| **Admin** | Platform operator (your team, for demo purposes) — approves listings, resolves disputes, monitors bookings/orders. |
+
+Since you confirmed the same user can act as both buyer and equipment lister, **Farmer and Equipment Owner are the same account type** with an optional "list equipment" capability toggled on per user — this avoids duplicate account systems and matches how a real farmer would use the app.
+
+Vendor accounts (input sellers) are a separate role, since a vendor is typically a business, not an individual farmer.
+
+## 3. Final Requirements
+
+**Functional — Marketplace (inputs)**
+- Vendor registration and product listing (name, category, price, stock, images, description)
+- Farmer browsing, search, filter by category/price
+- Cart, checkout, Razorpay payment
+- Order history and status (placed → confirmed → shipped → delivered) — kept simple; no real logistics integration
+- Vendor dashboard to manage listings and view orders
+
+**Functional — Equipment Rental**
+- Equipment listing (owner/dealer side): type, specs, rate (per day/hour), location, availability calendar
+- Farmer search/filter by equipment type, location, date range
+- Booking request → if the slot is contested, request enters an FCFS queue
+- 24-hour confirmation window on the top of the queue; Spring `@Scheduled` job auto-expires unconfirmed bookings and promotes the next farmer in queue
+- Booking status tracking: queued → confirmed → active → completed / expired / cancelled
+- Owner dashboard: approve/reject, view booking calendar
+
+**Non-functional**
+- Mobile-responsive (many end users are mobile-first)
+- Reasonably lightweight pages — assume patchy rural connectivity
+- Reliable, demoable scheduled-job behavior — this is your strongest technical talking point in evaluation, so it must work predictably
+
+**User requirements**
+- Simple, low-friction registration and browsing (assume low digital literacy — keep flows short, use clear labels, avoid jargon)
+
+**Technical requirements**
+- backend, React frontend,database, deployed live
+
+## 4. Proposed Solution
+
+**Core solution:** One platform, two modules, one shared user identity — an input marketplace and an FCFS-queued equipment rental system, deployed live as a working demo.
+
+## 5. MVP & Advanced Features
+
+| Feature | Priority | Why |
+|---|---|---|
+| Auth (register/login, farmer & vendor roles) | 🔴 Critical | Nothing else works without it |
+| Input product listing & browsing | 🔴 Critical | Core marketplace loop |
+| Cart & Razorpay checkout | 🔴 Critical | Core marketplace loop |
+| Equipment listing (owner side) | 🔴 Critical | Core rental loop |
+| Equipment booking + FCFS queue + 24hr expiry job | 🔴 Critical | Your standout technical feature |
+| Order/booking history & status | 🟡 Important | Expected UX, not hard to build |
+| Search/filter (category, equipment type, location) | 🟡 Important | Usability, moderate effort |
+| Admin panel (approve listings, view all orders/bookings) | 🟡 Important | Useful for demo and dispute-handling story |
+| Ratings/reviews (vendors, equipment owners) | 🟢 Optional | Nice-to-have, add only if time remains |
+| Email/SMS notifications on booking events | 🟢 Optional | Adds polish; skip if timeline tightens |
+| Multi-language UI | 🟢 Optional (future) | Real-world relevant, but out of scope for 8–10 weeks with a beginner team |
+
+**Explicitly out of scope:** AI/ML features of any kind (confirmed), logistics/delivery tracking, crop advisory, credit/lending features, hyperlocal geofencing.
+
+## 6. User / System Workflow
+
+**Marketplace flow:** Farmer registers → browses/searches products → adds to cart → checks out → order recorded → vendor sees order in dashboard → order status updated manually by vendor (placed/shipped/delivered).
+
+**Rental flow:** Owner registers/lists equipment → farmer searches by type/date → farmer sends booking request → system checks slot:
+- If free → booking auto-confirmed
+- If contested → request joins FCFS queue → the farmer at the head of the queue gets a 24-hour confirmation window → confirms in time → booking locked in; doesn't confirm in time → `@Scheduled` job expires it and promotes the next farmer in queue automatically
+
+**Admin flow:** Views all users, listings, orders, and bookings; can suspend a listing or user if needed for the demo.
+
+## 7. AI & Automation Features
+
+None — AI is explicitly excluded per your decision. The one automation feature retained is the **scheduled booking-expiry job**, which is genuine automation (not AI) solving a real fairness problem in the rental queue, and is worth highlighting in your project report as the platform's core engineering contribution.
+
+## 8. Tech Stack
+
+| Layer | Choice | Why (given a beginner team) |
+|---|---|---|
+| Backend | Spring Boot (Java) | Already decided; strong for interviews; Spring Data JPA keeps DB code approachable once basics are learned |
+| Frontend | React | Already decided; large beginner-friendly ecosystem and tutorials |
+| Database | PostgreSQL | Already decided; free-tier hosting widely available (Render, Railway, Supabase) |
+| Auth | Spring Security + JWT | Standard, well-documented pattern for Spring Boot beginners |
+| Payments | Razorpay (test mode) | Already decided; has a sandbox that doesn't require real settlement |
+| Scheduling | Spring `@Scheduled` | Already decided; no external job queue needed at this scale |
+| Deployment (backend) | Render or Railway (free/low-cost tier) | Simplest path to "deployed" for a student team with no DevOps experience |
+| Deployment (frontend) | Vercel or Netlify | Near-zero-config React deployment |
+| Deployment (DB) | Managed PostgreSQL on Render/Railway/Supabase | Avoids self-hosting a database |
+
+## 9. System Architecture (high level)
+
+```
+React (Vercel)  →  REST API  →  Spring Boot (Render)  →  PostgreSQL (Render/Supabase)
+                                        ↓
+                                   Razorpay API (payments)
+                                        ↓
+                          Spring @Scheduled job (runs inside the
+                          same backend instance — polls bookings
+                          table every few minutes for expired
+                          unconfirmed holds)
+```
+
+Simple three-tier architecture: React SPA calling a Spring Boot REST API, backed by PostgreSQL. No microservices, no message queue — appropriate for team size, timeline, and experience level. The scheduled job runs in-process; no separate worker service needed at this scale.
+
+## 10. Database Design (core entities)
+
+- **User** — id, name, phone/email, password_hash, role flags (is_vendor, is_equipment_owner), location
+- **Product** — id, vendor_id (FK→User), name, category, price, stock, description, image_url
+- **Order** — id, farmer_id (FK→User), status, total_amount, razorpay_payment_id, created_at
+- **OrderItem** — id, order_id (FK), product_id (FK), quantity, price_at_purchase
+- **Equipment** — id, owner_id (FK→User), type, description, rate, rate_unit (hour/day), location
+- **AvailabilitySlot** — id, equipment_id (FK), start_date, end_date, is_booked
+- **BookingRequest** — id, equipment_id (FK), farmer_id (FK), requested_slot, status (queued/confirmed/expired/completed/cancelled), queue_position, confirmation_deadline
+
+Relationships: one Vendor→many Products; one Farmer→many Orders→many OrderItems→one Product; one Owner→many Equipment→many AvailabilitySlots; one Equipment→many BookingRequests (queued), one active confirmed booking at a time.
+
+## 11. API Requirements (representative, not exhaustive)
+
+- `POST /auth/register`, `POST /auth/login`
+- `GET /products`, `GET /products/{id}`, `POST /products` (vendor), `PUT /products/{id}`
+- `POST /orders`, `GET /orders/my`, Razorpay webhook/callback endpoint for payment confirmation
+- `GET /equipment`, `POST /equipment` (owner), `GET /equipment/{id}/availability`
+- `POST /bookings`, `GET /bookings/my`, `POST /bookings/{id}/confirm`
+- `GET /admin/...` — protected admin-only endpoints
+
+## 12. Security
+
+- Passwords hashed (BCrypt via Spring Security), never stored plain
+- JWT-based session auth; role-based route protection (farmer/vendor/admin)
+- Razorpay secret key kept server-side only, in environment variables — never in frontend code or committed to Git
+- Input validation on all forms (server-side, not just client-side)
+- HTTPS enforced on deployed URLs (default on Render/Vercel)
+
+## 13. Development Phases (8–10 weeks, team of 4, no prior coding experience)
+
+Since the team is learning Spring Boot/React while building, the timeline needs deliberate ramp-up time — don't skip it.
+
+| Weeks | Focus |
+|---|---|
+| 1–2 | Learn basics: Java/Spring Boot fundamentals for 2 members, React fundamentals for 2 members; set up Git repo, project skeleton, DB schema |
+| 3–4 | Auth (register/login) end-to-end; basic product listing + browsing (marketplace skeleton) |
+| 5–6 | Cart + Razorpay checkout; equipment listing + plain booking (no queue yet — get the simple path working first) |
+| 7 | FCFS queue logic + `@Scheduled` expiry job — this is the hardest piece; give it a full week |
+| 8 | Admin panel, order/booking history views, UI polish |
+| 9 | Deployment (backend, frontend, DB), end-to-end testing, bug fixing |
+| 10 | Buffer week — testing, report writing, demo rehearsal |
+
+Recommended split: two members lean backend (Spring Boot/PostgreSQL), two lean frontend (React) — but everyone should touch both at least once, since the whole team is learning from scratch and knowledge silos will hurt if one person is absent near the deadline.
+
+## 14. Testing
+
+- Manual end-to-end testing of both flows (marketplace purchase, rental booking with queue contention) before deployment
+- Specifically test the expiry job with a short artificial timeout (e.g., 1–2 minutes instead of 24 hours) during development so you can actually observe the queue-promotion behavior without waiting a day
+- Basic input validation testing (empty fields, invalid prices, past dates for bookings)
+- Test Razorpay in sandbox/test mode only
+
+## 15. Deployment
+
+- Backend → Render or Railway free/hobby tier (Spring Boot JAR deploy)
+- Frontend → Vercel or Netlify (React build deploy)
+- Database → managed PostgreSQL instance on the same platform as backend, to avoid cross-network latency/config issues
+- Environment variables (DB credentials, Razorpay keys, JWT secret) set via the hosting platform's config — never hardcoded
+
+## 16. Future Scope
+
+- Multi-language UI (Marathi, Hindi) for real rural usability
+- Ratings/reviews if not built in MVP
+- SMS notifications for low-connectivity users
+- Logistics/delivery tracking for input orders
+- Optional AI-based demand insights (deliberately excluded now, but a reasonable "future work" line in your report)
+
+## 17. Risks & Mitigation
+
+| Risk | Mitigation |
+|---|---|
+| Team has zero prior coding experience — steepest risk to the timeline | Front-load learning in weeks 1–2, don't start "real" building until basics are solid; pair up rather than working solo |
+| FCFS queue + scheduled job is the hardest feature and easy to get wrong | Give it a dedicated week (7); test with short artificial timeouts, not real 24-hour waits |
+| Razorpay integration confusion (common beginner blocker) | Use Razorpay's official test-mode docs and sandbox keys from day one; don't attempt live payments |
+| Deployment left too late, discovered broken near deadline | Deploy a bare-bones version by week 6–7 (even before all features are done) so deployment issues surface early, not in the last week |
+| Scope creep (adding "just one more feature") | Treat the 🔴/🟡/🟢 priority table as a hard boundary; 🟢 items only if 🔴 and 🟡 are done with time to spare |
+
+## 18. Final Project Summary
+
+Krishisetu is a two-module agritech platform: an input marketplace where farmers buy seeds/fertilizer/pesticides from vendors, and an equipment rental system where farmers or dealers list machinery and other farmers book it through a fairness-driven FCFS queue with automatic 24-hour-expiry handling. Built with Spring Boot, React, and PostgreSQL, deployed live, and deliberately scoped to exclude AI — the project's strength lies in a clean, correctly-implemented core workflow and a genuinely well-engineered scheduled-job queue mechanic, executed realistically by a four-person team learning the stack from scratch over 8–10 weeks.
+
+---
