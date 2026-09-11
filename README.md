@@ -143,22 +143,20 @@ Relationships: one Vendor→many Products; one Farmer→many Orders→many Order
 
 ## 12. Security
 
-- Passwords hashed (BCrypt via Spring Security), never stored plain
 - JWT-based session auth; role-based route protection (farmer/vendor/admin)
-- Razorpay secret key kept server-side only, in environment variables — never in frontend code or committed to Git
+- Razorpay secret key kept server-side only, in environment variables — n
 - Input validation on all forms (server-side, not just client-side)
 - HTTPS enforced on deployed URLs (default on Render/Vercel)
 
-## 13. Development Phases (8–10 weeks, team of 4, no prior coding experience)
+## 13. Development Phases 
 
-Since the team is learning Spring Boot/React while building, the timeline needs deliberate ramp-up time — don't skip it.
 
 | Weeks | Focus |
 |---|---|
-| 1–2 | Learn basics: Java/Spring Boot fundamentals for 2 members, React fundamentals for 2 members; set up Git repo, project skeleton, DB schema |
+| 1–2 | Learn basics: React fundamentals for members; set up Git repo, project skeleton, DB schema |
 | 3–4 | Auth (register/login) end-to-end; basic product listing + browsing (marketplace skeleton) |
 | 5–6 | Cart + Razorpay checkout; equipment listing + plain booking (no queue yet — get the simple path working first) |
-| 7 | FCFS queue logic + `@Scheduled` expiry job — this is the hardest piece; give it a full week |
+| 7 | FCFS queue logic + `@Scheduled` expiry job |
 | 8 | Admin panel, order/booking history views, UI polish |
 | 9 | Deployment (backend, frontend, DB), end-to-end testing, bug fixing |
 | 10 | Buffer week — testing, report writing, demo rehearsal |
