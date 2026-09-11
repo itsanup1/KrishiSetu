@@ -87,38 +87,20 @@ Vendor accounts (input sellers) are a separate role, since a vendor is typically
 
 **Admin flow:** Views all users, listings, orders, and bookings; can suspend a listing or user if needed for the demo.
 
-## 7. AI & Automation Features
-
-None — AI is explicitly excluded per your decision. The one automation feature retained is the **scheduled booking-expiry job**, which is genuine automation (not AI) solving a real fairness problem in the rental queue, and is worth highlighting in your project report as the platform's core engineering contribution.
 
 ## 8. Tech Stack
 
-| Layer | Choice | Why (given a beginner team) |
+| Layer | Choice | |
 |---|---|---|
-| Backend | Spring Boot (Java) | Already decided; strong for interviews; Spring Data JPA keeps DB code approachable once basics are learned |
-| Frontend | React | Already decided; large beginner-friendly ecosystem and tutorials |
-| Database | PostgreSQL | Already decided; free-tier hosting widely available (Render, Railway, Supabase) |
-| Auth | Spring Security + JWT | Standard, well-documented pattern for Spring Boot beginners |
+| Backend | FastAPI[PYTHON] | keeps DB code approachable once basics are learned |
+| Frontend | React | large beginner-friendly ecosystem and tutorials |
+| Database | PostgreSQL | free-tier hosting widely available (Supabase) |
+| Auth | FastAPI tools & JWT | Standard, well-documented pattern for beginners |
 | Payments | Razorpay (test mode) | Already decided; has a sandbox that doesn't require real settlement |
-| Scheduling | Spring `@Scheduled` | Already decided; no external job queue needed at this scale |
-| Deployment (backend) | Render or Railway (free/low-cost tier) | Simplest path to "deployed" for a student team with no DevOps experience |
-| Deployment (frontend) | Vercel or Netlify | Near-zero-config React deployment |
-| Deployment (DB) | Managed PostgreSQL on Render/Railway/Supabase | Avoids self-hosting a database |
+| Deployment (backend) | Supabase | Simplest path to "deployed" |
+| Deployment (frontend) | Vercel | Near-zero-config React deployment |
+| Deployment (DB) | Managed PostgreSQL | Avoids self-hosting a database |
 
-## 9. System Architecture (high level)
-
-```
-React (Vercel)  →  REST API  →  Spring Boot (Render)  →  PostgreSQL (Render/Supabase)
-                                        ↓
-                                   Razorpay API (payments)
-                                        ↓
-                          Spring @Scheduled job (runs inside the
-                          same backend instance — polls bookings
-                          table every few minutes for expired
-                          unconfirmed holds)
-```
-
-Simple three-tier architecture: React SPA calling a Spring Boot REST API, backed by PostgreSQL. No microservices, no message queue — appropriate for team size, timeline, and experience level. The scheduled job runs in-process; no separate worker service needed at this scale.
 
 ## 10. Database Design (core entities)
 
