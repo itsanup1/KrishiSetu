@@ -1,8 +1,6 @@
-# Krishisetu — Final Project Blueprint
+# KrishiSetu 
 
 *Agri-input marketplace + equipment rental platform for Indian farmers*
-*Semester project · Team of 4 · 8–10 weeks · Beginner team, learning as they build*
-
 ---
 
 ## 1. Final Problem Definition
