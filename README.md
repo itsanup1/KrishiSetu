@@ -187,18 +187,9 @@ Recommended split: two members lean backend (Spring Boot/PostgreSQL), two lean f
 - Logistics/delivery tracking for input orders
 - Optional AI-based demand insights (deliberately excluded now, but a reasonable "future work" line in your report)
 
-## 17. Risks & Mitigation
 
-| Risk | Mitigation |
-|---|---|
-| Team has zero prior coding experience — steepest risk to the timeline | Front-load learning in weeks 1–2, don't start "real" building until basics are solid; pair up rather than working solo |
-| FCFS queue + scheduled job is the hardest feature and easy to get wrong | Give it a dedicated week (7); test with short artificial timeouts, not real 24-hour waits |
-| Razorpay integration confusion (common beginner blocker) | Use Razorpay's official test-mode docs and sandbox keys from day one; don't attempt live payments |
-| Deployment left too late, discovered broken near deadline | Deploy a bare-bones version by week 6–7 (even before all features are done) so deployment issues surface early, not in the last week |
-| Scope creep (adding "just one more feature") | Treat the 🔴/🟡/🟢 priority table as a hard boundary; 🟢 items only if 🔴 and 🟡 are done with time to spare |
+## 17. Final Project Summary
 
-## 18. Final Project Summary
-
-Krishisetu is a two-module agritech platform: an input marketplace where farmers buy seeds/fertilizer/pesticides from vendors, and an equipment rental system where farmers or dealers list machinery and other farmers book it through a fairness-driven FCFS queue with automatic 24-hour-expiry handling. Built with Spring Boot, React, and PostgreSQL, deployed live, and deliberately scoped to exclude AI — the project's strength lies in a clean, correctly-implemented core workflow and a genuinely well-engineered scheduled-job queue mechanic, executed realistically by a four-person team learning the stack from scratch over 8–10 weeks.
+Krishisetu is a two-module agritech platform: an input marketplace where farmers buy seeds/fertilizer/pesticides from vendors, and an equipment rental system where farmers or dealers list machinery and other farmers book it through a fairness-driven FCFS queue with automatic 24-hour-expiry handling. Built with React, FastAPI and PostgreSQL, deployed live. — the project's strength lies in a clean, correctly-implemented core workflow and a genuinely well-engineered scheduled-job queue mechanic.
 
 ---
