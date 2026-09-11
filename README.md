@@ -23,10 +23,6 @@ This is a scoped **student build**, not a commercial launch — pan-India in con
 | **Equipment Owner** | Lists equipment for rent — either an individual farmer (same account type as Farmer, dual capability) or a dealer/fleet operator with multiple machines. |
 | **Admin** | Platform operator (your team, for demo purposes) — approves listings, resolves disputes, monitors bookings/orders. |
 
-Since you confirmed the same user can act as both buyer and equipment lister, **Farmer and Equipment Owner are the same account type** with an optional "list equipment" capability toggled on per user — this avoids duplicate account systems and matches how a real farmer would use the app.
-
-Vendor accounts (input sellers) are a separate role, since a vendor is typically a business, not an individual farmer.
-
 ## 3. Final Requirements
 
 **Functional — Marketplace (inputs)**
