@@ -163,7 +163,6 @@ Since the team is learning Spring Boot/React while building, the timeline needs 
 | 9 | Deployment (backend, frontend, DB), end-to-end testing, bug fixing |
 | 10 | Buffer week — testing, report writing, demo rehearsal |
 
-Recommended split: two members lean backend (Spring Boot/PostgreSQL), two lean frontend (React) — but everyone should touch both at least once, since the whole team is learning from scratch and knowledge silos will hurt if one person is absent near the deadline.
 
 ## 14. Testing
 
@@ -174,21 +173,12 @@ Recommended split: two members lean backend (Spring Boot/PostgreSQL), two lean f
 
 ## 15. Deployment
 
-- Backend → Render or Railway free/hobby tier (Spring Boot JAR deploy)
-- Frontend → Vercel or Netlify (React build deploy)
+- Backend → FastAPI[PYTHON]
+- Frontend → Vercel (React build deploy)
 - Database → managed PostgreSQL instance on the same platform as backend, to avoid cross-network latency/config issues
-- Environment variables (DB credentials, Razorpay keys, JWT secret) set via the hosting platform's config — never hardcoded
+- Environment variables (DB credentials, Razorpay keys, JWT secret)
 
-## 16. Future Scope
-
-- Multi-language UI (Marathi, Hindi) for real rural usability
-- Ratings/reviews if not built in MVP
-- SMS notifications for low-connectivity users
-- Logistics/delivery tracking for input orders
-- Optional AI-based demand insights (deliberately excluded now, but a reasonable "future work" line in your report)
-
-
-## 17. Final Project Summary
+## 16. Final Project Summary
 
 Krishisetu is a two-module agritech platform: an input marketplace where farmers buy seeds/fertilizer/pesticides from vendors, and an equipment rental system where farmers or dealers list machinery and other farmers book it through a fairness-driven FCFS queue with automatic 24-hour-expiry handling. Built with React, FastAPI and PostgreSQL, deployed live. — the project's strength lies in a clean, correctly-implemented core workflow and a genuinely well-engineered scheduled-job queue mechanic.
 
