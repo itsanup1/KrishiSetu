@@ -63,19 +63,17 @@ Vendor accounts (input sellers) are a separate role, since a vendor is typically
 
 | Feature | Priority | Why |
 |---|---|---|
-| Auth (register/login, farmer & vendor roles) | 🔴 Critical | Nothing else works without it |
+| Auth (register/login, farmer & vendor roles) | 🔴 Critical |  |
 | Input product listing & browsing | 🔴 Critical | Core marketplace loop |
 | Cart & Razorpay checkout | 🔴 Critical | Core marketplace loop |
 | Equipment listing (owner side) | 🔴 Critical | Core rental loop |
-| Equipment booking + FCFS queue + 24hr expiry job | 🔴 Critical | Your standout technical feature |
+| Equipment booking + FCFS queue + 24hr expiry job | 🔴 Critical | standout technical feature |
 | Order/booking history & status | 🟡 Important | Expected UX, not hard to build |
 | Search/filter (category, equipment type, location) | 🟡 Important | Usability, moderate effort |
 | Admin panel (approve listings, view all orders/bookings) | 🟡 Important | Useful for demo and dispute-handling story |
-| Ratings/reviews (vendors, equipment owners) | 🟢 Optional | Nice-to-have, add only if time remains |
-| Email/SMS notifications on booking events | 🟢 Optional | Adds polish; skip if timeline tightens |
-| Multi-language UI | 🟢 Optional (future) | Real-world relevant, but out of scope for 8–10 weeks with a beginner team |
-
-**Explicitly out of scope:** AI/ML features of any kind (confirmed), logistics/delivery tracking, crop advisory, credit/lending features, hyperlocal geofencing.
+| Ratings/reviews (vendors, equipment owners) | 🟢 Optional | Nice-to-have |
+| Email/SMS notifications on booking events | 🟢 Optional | Adds polish |
+| Multi-language UI | 🟢 Optional (future) | Real-world relevant |
 
 ## 6. User / System Workflow
 
