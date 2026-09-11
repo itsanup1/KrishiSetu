@@ -44,11 +44,6 @@ Vendor accounts (input sellers) are a separate role, since a vendor is typically
 - Booking status tracking: queued → confirmed → active → completed / expired / cancelled
 - Owner dashboard: approve/reject, view booking calendar
 
-**Non-functional**
-- Mobile-responsive (many end users are mobile-first)
-- Reasonably lightweight pages — assume patchy rural connectivity
-- Reliable, demoable scheduled-job behavior — this is your strongest technical talking point in evaluation, so it must work predictably
-
 **User requirements**
 - Simple, low-friction registration and browsing (assume low digital literacy — keep flows short, use clear labels, avoid jargon)
 
@@ -86,7 +81,7 @@ Vendor accounts (input sellers) are a separate role, since a vendor is typically
 **Admin flow:** Views all users, listings, orders, and bookings; can suspend a listing or user if needed for the demo.
 
 
-## 8. Tech Stack
+## 7. Tech Stack
 
 | Layer | Choice | |
 |---|---|---|
@@ -100,7 +95,7 @@ Vendor accounts (input sellers) are a separate role, since a vendor is typically
 | Deployment (DB) | Managed PostgreSQL | Avoids self-hosting a database |
 
 
-## 10. Database Design (core entities)
+## 8. Database Design (core entities)
 
 - **User** — id, name, phone/email, password_hash, role flags (is_vendor, is_equipment_owner), location
 - **Product** — id, vendor_id (FK→User), name, category, price, stock, description, image_url
@@ -112,7 +107,7 @@ Vendor accounts (input sellers) are a separate role, since a vendor is typically
 
 Relationships: one Vendor→many Products; one Farmer→many Orders→many OrderItems→one Product; one Owner→many Equipment→many AvailabilitySlots; one Equipment→many BookingRequests (queued), one active confirmed booking at a time.
 
-## 11. API Requirements (representative, not exhaustive)
+## 9. API Requirements (representative, not exhaustive)
 
 - `POST /auth/register`, `POST /auth/login`
 - `GET /products`, `GET /products/{id}`, `POST /products` (vendor), `PUT /products/{id}`
@@ -121,14 +116,14 @@ Relationships: one Vendor→many Products; one Farmer→many Orders→many Order
 - `POST /bookings`, `GET /bookings/my`, `POST /bookings/{id}/confirm`
 - `GET /admin/...` — protected admin-only endpoints
 
-## 12. Security
+## 10. Security
 
 - JWT-based session auth; role-based route protection (farmer/vendor/admin)
 - Razorpay secret key kept server-side only, in environment variables — n
 - Input validation on all forms (server-side, not just client-side)
 - HTTPS enforced on deployed URLs (default on Render/Vercel)
 
-## 13. Development Phases 
+## 11. Development Phases 
 
 
 | Weeks | Focus |
@@ -142,21 +137,21 @@ Relationships: one Vendor→many Products; one Farmer→many Orders→many Order
 | 10 | Buffer week — testing, report writing, demo rehearsal |
 
 
-## 14. Testing
+## 12. Testing
 
 - Manual end-to-end testing of both flows (marketplace purchase, rental booking with queue contention) before deployment
 - Specifically test the expiry job with a short artificial timeout (e.g., 1–2 minutes instead of 24 hours) during development so you can actually observe the queue-promotion behavior without waiting a day
 - Basic input validation testing (empty fields, invalid prices, past dates for bookings)
 - Test Razorpay in sandbox/test mode only
 
-## 15. Deployment
+## 13. Deployment
 
 - Backend → FastAPI[PYTHON]
 - Frontend → Vercel (React build deploy)
 - Database → managed PostgreSQL instance on the same platform as backend, to avoid cross-network latency/config issues
 - Environment variables (DB credentials, Razorpay keys, JWT secret)
 
-## 16. Final Project Summary
+## 14. Final Project Summary
 
 Krishisetu is a two-module agritech platform: an input marketplace where farmers buy seeds/fertilizer/pesticides from vendors, and an equipment rental system where farmers or dealers list machinery and other farmers book it through a fairness-driven FCFS queue with automatic 24-hour-expiry handling. Built with React, FastAPI and PostgreSQL, deployed live. — the project's strength lies in a clean, correctly-implemented core workflow and a genuinely well-engineered scheduled-job queue mechanic.
 
