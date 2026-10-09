@@ -23,6 +23,8 @@ class ProductCategory(str, enum.Enum):
     SEEDS = "SEEDS"
     FERTILIZER = "FERTILIZER"
     PESTICIDE = "PESTICIDE"
+    IRRIGATION = "IRRIGATION"
+    SPRAYER = "SPRAYER"
 
 class EquipmentType(str, enum.Enum):
     TRACTOR = "TRACTOR"
@@ -31,6 +33,7 @@ class EquipmentType(str, enum.Enum):
     CULTIVATOR = "CULTIVATOR"
     SEED_DRILL = "SEED_DRILL"
     SPRAYER = "SPRAYER"
+    PLOUGH_LEVELER = "PLOUGH_LEVELER"
 
 class RateUnit(str, enum.Enum):
     HOUR = "HOUR"

@@ -40,38 +40,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const savedToken = localStorage.getItem('krishi_token');
       const savedUser = localStorage.getItem('krishi_user');
 
-      if (savedToken && savedUser) {
-        try {
-          setUser(JSON.parse(savedUser));
-          setToken(savedToken);
-          // Attempt to verify with /auth/me
-          const me = await api.getMe();
-          setUser(me);
-          localStorage.setItem('krishi_user', JSON.stringify(me));
-        } catch {
-          // If token failed, reset
-          localStorage.removeItem('krishi_token');
-          localStorage.removeItem('krishi_user');
-          setUser(null);
-          setToken(null);
+      if (healthy) {
+        let authSuccess = false;
+        if (savedToken && !savedToken.startsWith('mock-')) {
+          try {
+            setToken(savedToken);
+            const me = await api.getMe();
+            setUser(me);
+            localStorage.setItem('krishi_user', JSON.stringify(me));
+            authSuccess = true;
+          } catch {
+            localStorage.removeItem('krishi_token');
+            localStorage.removeItem('krishi_user');
+          }
+        }
+
+        if (!authSuccess) {
+          try {
+            const res = await api.login('farmer@krishisetu.com', 'farmer123');
+            setToken(res.access_token);
+            setUser(res.user);
+            localStorage.setItem('krishi_token', res.access_token);
+            localStorage.setItem('krishi_user', JSON.stringify(res.user));
+            authSuccess = true;
+          } catch (e) {
+            console.warn('Initial backend login failed, falling back to mock user', e);
+          }
         }
       } else {
-        // By default for demo ease, start with the default Farmer & Owner account
-        const defaultUser: User = {
-          id: 1,
-          name: 'Ramesh Kumar (Farmer & Owner)',
-          email: 'farmer@krishisetu.com',
-          phone: '9876543210',
-          role: 'FARMER',
-          is_equipment_owner: true,
-          location: 'Nashik, Maharashtra',
-          created_at: new Date().toISOString(),
-        };
-        const demoToken = 'mock-jwt-demo-token-farmer-1';
-        localStorage.setItem('krishi_token', demoToken);
-        localStorage.setItem('krishi_user', JSON.stringify(defaultUser));
-        setUser(defaultUser);
-        setToken(demoToken);
+        if (savedToken && savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+            setToken(savedToken);
+          } catch {
+            localStorage.removeItem('krishi_token');
+            localStorage.removeItem('krishi_user');
+            setUser(null);
+            setToken(null);
+          }
+        } else {
+          const defaultUser: User = {
+            id: 1,
+            name: 'Ramesh Kumar (Farmer & Owner)',
+            email: 'farmer@krishisetu.com',
+            phone: '9876543210',
+            role: 'FARMER',
+            is_equipment_owner: true,
+            location: 'Nashik, Maharashtra',
+            created_at: new Date().toISOString(),
+          };
+          const demoToken = 'mock-jwt-1';
+          localStorage.setItem('krishi_token', demoToken);
+          localStorage.setItem('krishi_user', JSON.stringify(defaultUser));
+          setUser(defaultUser);
+          setToken(demoToken);
+        }
       }
       setIsLoading(false);
     };
@@ -121,13 +144,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const quickSwitchUser = async (role: 'FARMER_OWNER' | 'FARMER' | 'VENDOR' | 'ADMIN') => {
-    const emails: Record<string, string> = {
-      FARMER_OWNER: 'farmer@krishisetu.com',
-      FARMER: 'farmer2@krishisetu.com',
-      VENDOR: 'vendor@krishisetu.com',
-      ADMIN: 'admin@krishisetu.com',
+    const creds: Record<string, { email: string; pass: string }> = {
+      FARMER_OWNER: { email: 'farmer@krishisetu.com', pass: 'farmer123' },
+      FARMER: { email: 'farmer2@krishisetu.com', pass: 'farmer123' },
+      VENDOR: { email: 'vendor@krishisetu.com', pass: 'vendor123' },
+      ADMIN: { email: 'admin@krishisetu.com', pass: 'admin123' },
     };
-    await login(emails[role]);
+    const target = creds[role] || { email: 'farmer@krishisetu.com', pass: 'farmer123' };
+    await login(target.email, target.pass);
   };
 
   return (

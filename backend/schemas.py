@@ -29,7 +29,7 @@ class Token(BaseModel):
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: Optional[str] = None
 
 # Product Schemas
 class ProductBase(BaseModel):

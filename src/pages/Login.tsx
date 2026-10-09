@@ -12,7 +12,7 @@ export const Login: React.FC = () => {
   const from = (location.state as any)?.from?.pathname || '/dashboard';
 
   const [email, setEmail] = useState('farmer@krishisetu.com');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('farmer123');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +39,13 @@ export const Login: React.FC = () => {
 
   const setTestAccount = (testEmail: string) => {
     setEmail(testEmail);
-    setPassword('password123');
+    if (testEmail.includes('admin')) {
+      setPassword('admin123');
+    } else if (testEmail.includes('vendor')) {
+      setPassword('vendor123');
+    } else {
+      setPassword('farmer123');
+    }
   };
 
   return (
