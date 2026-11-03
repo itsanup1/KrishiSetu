@@ -11,6 +11,7 @@ interface CartContextType {
   addToCart: (productId: number, quantity?: number) => Promise<void>;
   updateQuantity: (cartItemId: number, quantity: number) => Promise<void>;
   removeFromCart: (cartItemId: number) => Promise<void>;
+  clearCart: () => Promise<void>;
   refreshCart: () => Promise<void>;
 }
 
@@ -73,6 +74,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const clearCart = async () => {
+    try {
+      setIsLoading(true);
+      await api.clearCart();
+      setCart([]);
+    } catch (e) {
+      console.error('Error clearing cart', e);
+      setCart([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = cart.reduce((sum, item) => {
     const price = item.product?.price || 0;
@@ -89,6 +103,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addToCart,
         updateQuantity,
         removeFromCart,
+        clearCart,
         refreshCart,
       }}
     >

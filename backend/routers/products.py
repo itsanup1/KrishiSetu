@@ -25,7 +25,7 @@ def get_products(
     # Populate vendor name
     result = []
     for p in products:
-        p_dict = ProductResponse.from_orm(p)
+        p_dict = ProductResponse.model_validate(p)
         if p.vendor:
             p_dict.vendor_name = p.vendor.name
         result.append(p_dict)
@@ -37,14 +37,14 @@ def get_my_products(
     db: Session = Depends(get_db),
 ):
     products = db.query(Product).filter(Product.vendor_id == current_user.id).all()
-    return [ProductResponse.from_orm(p) for p in products]
+    return [ProductResponse.model_validate(p) for p in products]
 
 @router.get("/{id}", response_model=ProductResponse)
 def get_product_by_id(id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-    resp = ProductResponse.from_orm(product)
+    resp = ProductResponse.model_validate(product)
     if product.vendor:
         resp.vendor_name = product.vendor.name
     return resp
@@ -67,7 +67,7 @@ def create_product(
     db.add(product)
     db.commit()
     db.refresh(product)
-    resp = ProductResponse.from_orm(product)
+    resp = ProductResponse.model_validate(product)
     resp.vendor_name = current_user.name
     return resp
 
@@ -90,7 +90,7 @@ def update_product(
 
     db.commit()
     db.refresh(product)
-    resp = ProductResponse.from_orm(product)
+    resp = ProductResponse.model_validate(product)
     resp.vendor_name = current_user.name
     return resp
 

@@ -75,6 +75,15 @@ def update_cart_item(
     db.refresh(item)
     return item
 
+@router.delete("/cart", status_code=status.HTTP_204_NO_CONTENT)
+def clear_cart(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    db.query(CartItem).filter(CartItem.farmer_id == current_user.id).delete()
+    db.commit()
+    return None
+
 @router.delete("/cart/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_cart_item(
     id: int,
@@ -82,10 +91,9 @@ def delete_cart_item(
     db: Session = Depends(get_db),
 ):
     item = db.query(CartItem).filter(CartItem.id == id, CartItem.farmer_id == current_user.id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Cart item not found")
-    db.delete(item)
-    db.commit()
+    if item:
+        db.delete(item)
+        db.commit()
     return None
 
 # Order Endpoints
@@ -96,22 +104,41 @@ def create_order(
     db: Session = Depends(get_db),
 ):
     cart_items = db.query(CartItem).filter(CartItem.farmer_id == current_user.id).all()
-    if not cart_items:
+    if not cart_items and not order_in.items:
         raise HTTPException(status_code=400, detail="Cannot checkout with empty cart.")
 
     total_amount = 0.0
     order_items = []
 
-    # Validate stock and calculate total
-    for item in cart_items:
-        product = item.product
-        if not product or product.stock < item.quantity:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Insufficient stock for '{product.name if product else 'Item'}'"
-            )
-        total_amount += product.price * item.quantity
-        order_items.append((product, item.quantity, product.price))
+    # If explicit items were passed in checkout payload, prefer those
+    if order_in.items and len(order_in.items) > 0:
+        for item_in in order_in.items:
+            product = db.query(Product).filter(Product.id == item_in.product_id).first()
+            if not product:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Product #{item_in.product_id} not found in marketplace"
+                )
+            if product.stock < item_in.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient stock for '{product.name}' (Requested: {item_in.quantity}, Available: {product.stock})"
+                )
+            price = item_in.price_at_purchase if item_in.price_at_purchase is not None else product.price
+            total_amount += price * item_in.quantity
+            order_items.append((product, item_in.quantity, price))
+    elif cart_items:
+        for item in cart_items:
+            product = item.product
+            if not product:
+                raise HTTPException(status_code=404, detail="Product not found for cart item")
+            if product.stock < item.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient stock for '{product.name}' (Requested: {item.quantity}, Available: {product.stock})"
+                )
+            total_amount += product.price * item.quantity
+            order_items.append((product, item.quantity, product.price))
 
     # Create Order
     db_order = Order(
@@ -137,14 +164,14 @@ def create_order(
         )
         db.add(oi)
 
-    # Empty user's cart
+    # Empty user's cart in database
     for item in cart_items:
         db.delete(item)
 
     db.commit()
     db.refresh(db_order)
 
-    resp = OrderResponse.from_orm(db_order)
+    resp = OrderResponse.model_validate(db_order)
     resp.farmer_name = current_user.name
     return resp
 
@@ -174,7 +201,7 @@ def get_my_orders(
 
     results = []
     for o in orders:
-        resp = OrderResponse.from_orm(o)
+        resp = OrderResponse.model_validate(o)
         if o.farmer:
             resp.farmer_name = o.farmer.name
         results.append(resp)
@@ -189,7 +216,7 @@ def get_order_by_id(
     order = db.query(Order).filter(Order.id == id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    resp = OrderResponse.from_orm(order)
+    resp = OrderResponse.model_validate(order)
     if order.farmer:
         resp.farmer_name = order.farmer.name
     return resp
@@ -207,7 +234,7 @@ def update_order_status(
     order.status = status_update.status
     db.commit()
     db.refresh(order)
-    resp = OrderResponse.from_orm(order)
+    resp = OrderResponse.model_validate(order)
     if order.farmer:
         resp.farmer_name = order.farmer.name
     return resp

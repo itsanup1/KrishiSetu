@@ -16,9 +16,10 @@ export const Orders: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await api.getMyOrders();
-      setOrders(data);
+      setOrders(data || []);
     } catch (e) {
       console.error('Error fetching orders', e);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }

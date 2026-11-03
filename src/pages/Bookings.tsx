@@ -17,9 +17,10 @@ export const Bookings: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await api.getMyBookings();
-      setBookings(data);
+      setBookings(data || []);
     } catch (e) {
       console.error('Error fetching bookings', e);
+      setBookings([]);
     } finally {
       setIsLoading(false);
     }

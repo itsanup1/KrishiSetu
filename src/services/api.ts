@@ -4,6 +4,7 @@ import {
   Product,
   CartItem,
   Order,
+  OrderItem,
   Equipment,
   AvailabilitySlot,
   BookingRequest,
@@ -769,33 +770,64 @@ class MockBackendEngine {
   }
 
   // ORDERS
+  public saveOrder(order: Order): void {
+    const existingIdx = this.orders.findIndex((o) => o.id === order.id);
+    if (existingIdx >= 0) {
+      this.orders[existingIdx] = { ...this.orders[existingIdx], ...order };
+    } else {
+      this.orders.unshift(order);
+    }
+    setStorage(STORAGE_KEYS.ORDERS, this.orders);
+  }
+
   public createOrder(
     farmerId: number,
     razorpayOrderId?: string,
-    razorpayPaymentId?: string
+    razorpayPaymentId?: string,
+    deliveryAddress?: string,
+    items?: Array<{ product_id: number; quantity: number; price_at_purchase?: number }>
   ): Order {
-    const cartItems = this.getCart(farmerId);
-    if (!cartItems.length) {
-      throw new Error('Cart is empty');
-    }
-
+    let orderItems: OrderItem[] = [];
     let total = 0;
-    const orderItems = cartItems.map((ci, idx) => {
-      const price = ci.product ? ci.product.price : 0;
-      total += price * ci.quantity;
-      // Deduct stock
-      if (ci.product) {
-        ci.product.stock = Math.max(0, ci.product.stock - ci.quantity);
+
+    if (items && items.length > 0) {
+      orderItems = items.map((it, idx) => {
+        const prod = this.products.find((p) => p.id === it.product_id);
+        const price = it.price_at_purchase !== undefined ? it.price_at_purchase : (prod ? prod.price : 0);
+        total += price * it.quantity;
+        if (prod) {
+          prod.stock = Math.max(0, prod.stock - it.quantity);
+        }
+        return {
+          id: idx + 1,
+          order_id: 0,
+          product_id: it.product_id,
+          quantity: it.quantity,
+          price_at_purchase: price,
+          product: prod,
+        };
+      });
+    } else {
+      const cartItems = this.getCart(farmerId);
+      if (!cartItems.length) {
+        throw new Error('Cart is empty');
       }
-      return {
-        id: idx + 1,
-        order_id: 0,
-        product_id: ci.product_id,
-        quantity: ci.quantity,
-        price_at_purchase: price,
-        product: ci.product,
-      };
-    });
+      orderItems = cartItems.map((ci, idx) => {
+        const price = ci.product ? ci.product.price : 0;
+        total += price * ci.quantity;
+        if (ci.product) {
+          ci.product.stock = Math.max(0, ci.product.stock - ci.quantity);
+        }
+        return {
+          id: idx + 1,
+          order_id: 0,
+          product_id: ci.product_id,
+          quantity: ci.quantity,
+          price_at_purchase: price,
+          product: ci.product,
+        };
+      });
+    }
 
     const farmer = this.users.find((u) => u.id === farmerId);
     const newOrder: Order = {
@@ -804,8 +836,9 @@ class MockBackendEngine {
       farmer_name: farmer ? farmer.name : 'Farmer',
       status: 'PLACED',
       total_amount: total,
+      delivery_address: deliveryAddress || farmer?.location || 'Nashik, Maharashtra',
       razorpay_order_id: razorpayOrderId || `order_test_${Date.now()}`,
-      razorpay_payment_id: razorpayPaymentId || `pay_test_${Date.now()}`,
+      razorpay_payment_id: razorpayPaymentId,
       items: orderItems,
       created_at: new Date().toISOString(),
     };
@@ -841,11 +874,25 @@ class MockBackendEngine {
     return o;
   }
 
-  public updateOrderStatus(orderId: number, status: OrderStatus): Order {
-    const o = this.orders.find((ord) => ord.id === orderId);
-    if (!o) throw new Error('Order not found');
-    o.status = status;
-    o.updated_at = new Date().toISOString();
+  public updateOrderStatus(orderId: number, status: OrderStatus, paymentId?: string): Order {
+    let o = this.orders.find((ord) => ord.id === orderId);
+    if (!o) {
+      o = {
+        id: orderId,
+        farmer_id: 1,
+        farmer_name: 'Farmer',
+        status,
+        total_amount: 0,
+        razorpay_payment_id: paymentId,
+        items: [],
+        created_at: new Date().toISOString(),
+      };
+      this.orders.unshift(o);
+    } else {
+      o.status = status;
+      if (paymentId) o.razorpay_payment_id = paymentId;
+      o.updated_at = new Date().toISOString();
+    }
     setStorage(STORAGE_KEYS.ORDERS, this.orders);
     return o;
   }
@@ -1167,6 +1214,23 @@ export const api = {
     }
   },
 
+  async updateProfile(data: Partial<User> & { password?: string }): Promise<User> {
+    try {
+      const res = await apiClient.put('/auth/me', data);
+      return res.data;
+    } catch {
+      const userStr = localStorage.getItem('krishi_user');
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        const updated = { ...u, ...data };
+        delete (updated as any).password;
+        localStorage.setItem('krishi_user', JSON.stringify(updated));
+        return updated;
+      }
+      throw new Error('User not found');
+    }
+  },
+
   // Products
   async getProducts(category?: string, search?: string): Promise<Product[]> {
     try {
@@ -1270,6 +1334,21 @@ export const api = {
     }
   },
 
+  async clearCart(): Promise<boolean> {
+    try {
+      await apiClient.delete('/cart');
+      const userStr = localStorage.getItem('krishi_user');
+      const farmerId = userStr ? JSON.parse(userStr).id : 1;
+      mockBackend.clearCart(farmerId);
+      return true;
+    } catch {
+      const userStr = localStorage.getItem('krishi_user');
+      const farmerId = userStr ? JSON.parse(userStr).id : 1;
+      mockBackend.clearCart(farmerId);
+      return true;
+    }
+  },
+
   // Orders & Payment
   async createRazorpayOrder(amount: number) {
     try {
@@ -1286,17 +1365,22 @@ export const api = {
   },
 
   async createOrder(dataOrRazorpayOrderId?: any, razorpayPaymentId?: string): Promise<Order> {
+    const payload = typeof dataOrRazorpayOrderId === 'object'
+      ? dataOrRazorpayOrderId
+      : { razorpay_order_id: dataOrRazorpayOrderId, razorpay_payment_id: razorpayPaymentId };
     try {
-      const payload = typeof dataOrRazorpayOrderId === 'object'
-        ? dataOrRazorpayOrderId
-        : { razorpay_order_id: dataOrRazorpayOrderId, razorpay_payment_id: razorpayPaymentId };
       const res = await apiClient.post('/orders', payload);
+      if (res.data) {
+        mockBackend.saveOrder(res.data);
+      }
       return res.data;
     } catch {
       const userStr = localStorage.getItem('krishi_user');
       const farmerId = userStr ? JSON.parse(userStr).id : 1;
       const rzpOrderId = typeof dataOrRazorpayOrderId === 'object' ? dataOrRazorpayOrderId?.razorpay_order_id : dataOrRazorpayOrderId;
-      return mockBackend.createOrder(farmerId, rzpOrderId, razorpayPaymentId);
+      const deliveryAddress = typeof dataOrRazorpayOrderId === 'object' ? dataOrRazorpayOrderId?.delivery_address : undefined;
+      const items = typeof dataOrRazorpayOrderId === 'object' ? dataOrRazorpayOrderId?.items : undefined;
+      return mockBackend.createOrder(farmerId, rzpOrderId, razorpayPaymentId, deliveryAddress, items);
     }
   },
 
@@ -1308,20 +1392,26 @@ export const api = {
   }): Promise<boolean> {
     try {
       await apiClient.post('/payments/verify', data);
+      mockBackend.updateOrderStatus(data.order_id, 'CONFIRMED', data.razorpay_payment_id);
       return true;
     } catch {
-      mockBackend.updateOrderStatus(data.order_id, 'PLACED');
+      // Backend unavailable or order created in mock
+      mockBackend.updateOrderStatus(data.order_id, 'CONFIRMED', data.razorpay_payment_id);
       return true;
     }
   },
 
   async getMyOrders(): Promise<Order[]> {
+    const userStr = localStorage.getItem('krishi_user');
+    const user = userStr ? JSON.parse(userStr) : null;
     try {
       const res = await apiClient.get('/orders/my');
-      return res.data;
+      const orders: Order[] = res.data || [];
+      for (const ord of orders) {
+        mockBackend.saveOrder(ord);
+      }
+      return orders;
     } catch {
-      const userStr = localStorage.getItem('krishi_user');
-      const user = userStr ? JSON.parse(userStr) : null;
       return mockBackend.getOrders(user?.id, user?.role);
     }
   },
@@ -1329,6 +1419,9 @@ export const api = {
   async getOrder(id: number): Promise<Order> {
     try {
       const res = await apiClient.get(`/orders/${id}`);
+      if (res.data) {
+        mockBackend.saveOrder(res.data);
+      }
       return res.data;
     } catch {
       return mockBackend.getOrderById(id);
@@ -1338,6 +1431,9 @@ export const api = {
   async updateOrderStatus(id: number, status: OrderStatus): Promise<Order> {
     try {
       const res = await apiClient.put(`/orders/${id}/status`, { status });
+      if (res.data) {
+        mockBackend.saveOrder(res.data);
+      }
       return res.data;
     } catch {
       return mockBackend.updateOrderStatus(id, status);
@@ -1404,6 +1500,16 @@ export const api = {
       const all = mockBackend.getEquipment();
       if (!user) return all;
       return all.filter((eq) => eq.owner_id === user.id);
+    }
+  },
+
+  async getEquipmentBookings(equipmentId: number): Promise<BookingRequest[]> {
+    try {
+      const res = await apiClient.get(`/equipment/${equipmentId}/bookings`);
+      return res.data;
+    } catch {
+      const all = mockBackend.getBookings();
+      return all.filter((b) => b.equipment_id === equipmentId);
     }
   },
 
@@ -1497,6 +1603,10 @@ export const api = {
 
   async getAdminUsers(): Promise<User[]> {
     return this.getAllUsers();
+  },
+
+  async getAdminOrders(): Promise<Order[]> {
+    return this.getAllOrders();
   },
 
   async getAllOrders(): Promise<Order[]> {

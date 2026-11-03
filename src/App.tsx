@@ -30,6 +30,9 @@ import { VendorOrders } from './pages/VendorOrders';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminUsers } from './pages/AdminUsers';
 import { AdminBookings } from './pages/AdminBookings';
+import { AdminOrders } from './pages/AdminOrders';
+import { Profile } from './pages/Profile';
+import { AICropDoctor } from './pages/AICropDoctor';
 
 export default function App() {
   return (
@@ -48,8 +51,17 @@ export default function App() {
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/equipment" element={<EquipmentList />} />
                 <Route path="/equipment/:id" element={<EquipmentDetail />} />
+                <Route path="/crop-doctor" element={<AICropDoctor />} />
 
                 {/* Farmer / Customer Routes */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/dashboard"
                   element={
@@ -101,12 +113,20 @@ export default function App() {
                   }
                 />
                 <Route
+                  path="/my-equipment"
+                  element={<Navigate to="/owner/equipment" replace />}
+                />
+                <Route
                   path="/owner/bookings"
                   element={
                     <ProtectedRoute>
                       <EquipmentBookings />
                     </ProtectedRoute>
                   }
+                />
+                <Route
+                  path="/my-equipment/bookings"
+                  element={<Navigate to="/owner/bookings" replace />}
                 />
                 <Route
                   path="/equipment/new"
@@ -189,6 +209,14 @@ export default function App() {
                   element={
                     <RoleBasedRoute allowedRoles={['ADMIN']}>
                       <AdminBookings />
+                    </RoleBasedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/orders"
+                  element={
+                    <RoleBasedRoute allowedRoles={['ADMIN']}>
+                      <AdminOrders />
                     </RoleBasedRoute>
                   }
                 />

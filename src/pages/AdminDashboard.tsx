@@ -139,7 +139,7 @@ export const AdminDashboard: React.FC = () => {
           <p className="text-xs text-slate-500 leading-relaxed">
             Monitor Razorpay payment verifications, vendor fulfillment stages, and shipment deliveries.
           </p>
-          <Link to="/orders" className="block pt-2">
+          <Link to="/admin/orders" className="block pt-2">
             <Button variant="outline" size="sm" className="w-full" rightIcon={<ArrowRight className="w-4 h-4" />}>
               View Platform Orders
             </Button>

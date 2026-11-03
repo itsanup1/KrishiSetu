@@ -18,6 +18,7 @@ import {
   PlusCircle,
   PhoneCall,
   UserCheck,
+  Sparkles,
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -202,6 +203,17 @@ export const Navbar: React.FC = () => {
               >
                 Equipment Rental
               </Link>
+              <Link
+                to="/crop-doctor"
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition inline-flex items-center gap-1.5 ${
+                  isActive('/crop-doctor')
+                    ? 'bg-emerald-50 text-emerald-800 font-semibold border border-emerald-200'
+                    : 'text-slate-600 hover:text-emerald-700 hover:bg-slate-50'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                <span>AI Crop Doctor</span>
+              </Link>
             </nav>
           </div>
 
@@ -328,13 +340,40 @@ export const Navbar: React.FC = () => {
                       )}
 
                       {user.role === 'ADMIN' && (
-                        <Link
-                          to="/admin"
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                        >
-                          <ShieldCheck className="w-4 h-4 text-slate-500" /> Admin Console
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin"
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-slate-500" /> Admin Console
+                          </Link>
+                          <Link
+                            to="/admin/orders"
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                          >
+                            <ShoppingCart className="w-4 h-4 text-slate-500" /> Platform Orders
+                          </Link>
+                          <Link
+                            to="/admin/users"
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                          >
+                            <UserCheck className="w-4 h-4 text-slate-500" /> User Registry
+                          </Link>
+                          <Link
+                            to="/admin/bookings"
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                          >
+                            <CalendarDays className="w-4 h-4 text-slate-500" /> FCFS Rental Queues
+                          </Link>
+                        </>
                       )}
+
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 border-t border-slate-100 mt-1"
+                      >
+                        <UserIcon className="w-4 h-4 text-slate-500" /> My Profile & Settings
+                      </Link>
                     </div>
 
                     <div className="py-1">
@@ -404,6 +443,14 @@ export const Navbar: React.FC = () => {
             className="block px-3 py-2 rounded-md text-sm font-semibold text-slate-800 hover:bg-slate-50"
           >
             Equipment Rental
+          </Link>
+          <Link
+            to="/crop-doctor"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold text-emerald-800 bg-emerald-50"
+          >
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <span>AI Crop Doctor</span>
           </Link>
           {isAuthenticated && user && (
             <div className="pt-2 border-t border-slate-100 space-y-1">

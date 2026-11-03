@@ -11,7 +11,7 @@ from backend.config import settings
 router = APIRouter(prefix="/api/bookings", tags=["Equipment Bookings & FCFS Queue"])
 
 def format_booking_response(b: BookingRequest) -> BookingResponse:
-    resp = BookingResponse.from_orm(b)
+    resp = BookingResponse.model_validate(b)
     if b.farmer:
         resp.farmer_name = b.farmer.name
         resp.farmer_phone = b.farmer.phone

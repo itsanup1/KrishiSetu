@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from datetime import datetime, timedelta
 from backend.database import SessionLocal, engine, Base
 from backend.models import (
@@ -14,11 +18,12 @@ from backend.models import (
 from backend.auth import get_password_hash
 
 def seed():
+    Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
     try:
-        print("[Krishisetu DB] Seeding full agricultural catalog to Supabase...")
+        print("[Krishisetu DB] Seeding full agricultural catalog...")
 
         # 1. Ensure Users exist
         def get_or_create_user(email, name, role, is_owner, phone, location, password):

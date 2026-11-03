@@ -26,7 +26,8 @@ export const OrderDetail: React.FC = () => {
     const fetchOrder = async () => {
       if (!id) return;
       try {
-        const data = await api.getOrder(parseInt(id, 10));
+        const orderIdNum = parseInt(id, 10);
+        const data = await api.getOrder(orderIdNum);
         setOrder(data);
       } catch (e) {
         console.error('Error fetching order', e);
@@ -142,7 +143,7 @@ export const OrderDetail: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {order.items.map((item, i) => (
+              {(order.items || []).map((item, i) => (
                 <tr key={i}>
                   <td className="py-3 px-3">
                     <span className="font-bold text-slate-900 block">
@@ -156,10 +157,10 @@ export const OrderDetail: React.FC = () => {
                     {item.quantity}
                   </td>
                   <td className="py-3 px-3 text-right text-slate-700 font-mono">
-                    ₹{item.price_at_purchase.toLocaleString('en-IN')}
+                    ₹{(item.price_at_purchase || 0).toLocaleString('en-IN')}
                   </td>
                   <td className="py-3 px-3 text-right font-bold text-slate-900 font-mono">
-                    ₹{(item.quantity * item.price_at_purchase).toLocaleString('en-IN')}
+                    ₹{(item.quantity * (item.price_at_purchase || 0)).toLocaleString('en-IN')}
                   </td>
                 </tr>
               ))}

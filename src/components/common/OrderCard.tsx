@@ -33,7 +33,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateStatus, isV
             Order #{order.id} · {formatDate(order.created_at)}
           </span>
           <span className="text-sm font-bold text-slate-900">
-            {order.items.length} {order.items.length === 1 ? 'Item' : 'Items'}
+            {(order.items || []).length} {(order.items || []).length === 1 ? 'Item' : 'Items'}
           </span>
           {order.farmer_name && (
             <span className="text-xs text-slate-500 ml-2">Customer: {order.farmer_name}</span>
@@ -41,7 +41,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateStatus, isV
         </div>
         <div className="flex items-center gap-3">
           <span className="text-base font-extrabold text-slate-900">
-            ₹{order.total_amount.toLocaleString('en-IN')}
+            ₹{(order.total_amount || 0).toLocaleString('en-IN')}
           </span>
           <StatusBadge status={order.status} type="order" />
         </div>
@@ -49,7 +49,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateStatus, isV
 
       {/* Items list */}
       <div className="divide-y divide-slate-100 mb-4">
-        {order.items.map((item, idx) => (
+        {(order.items || []).map((item, idx) => (
           <div key={idx} className="py-2.5 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <Package className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -58,12 +58,12 @@ export const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdateStatus, isV
                   {item.product?.name || `Product #${item.product_id}`}
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Quantity: {item.quantity} × ₹{item.price_at_purchase}
+                  Quantity: {item.quantity} × ₹{item.price_at_purchase || 0}
                 </p>
               </div>
             </div>
             <span className="font-bold text-slate-800">
-              ₹{(item.quantity * item.price_at_purchase).toLocaleString('en-IN')}
+              ₹{(item.quantity * (item.price_at_purchase || 0)).toLocaleString('en-IN')}
             </span>
           </div>
         ))}

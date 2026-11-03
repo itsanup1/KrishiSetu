@@ -63,21 +63,26 @@ export const Cart: React.FC = () => {
     setError(null);
 
     try {
-      // 1. Create order on backend
+      // 1. Generate Razorpay order
+      const rzpOrder = await api.createRazorpayOrder(totalAmount);
+      const rzpId = rzpOrder?.id || `order_test_${Date.now()}`;
+
+      // 2. Create order on backend with linked Razorpay ID
       const order = await api.createOrder({
         delivery_address: deliveryAddress,
+        razorpay_order_id: rzpId,
         items: cart.map((c) => ({
-          product_id: c.product.id,
+          product_id: c.product?.id || c.product_id,
           quantity: c.quantity,
-          price_at_purchase: c.product.price,
+          price_at_purchase: c.product?.price || 0,
         })),
       });
 
-      // 2. Open Razorpay test gateway
+      // 3. Open Razorpay test gateway
       setPaymentDetails({
         orderId: order.id,
-        razorpayOrderId: order.razorpay_order_id,
-        amount: order.total_amount,
+        razorpayOrderId: rzpId,
+        amount: order.total_amount || totalAmount,
       });
       setIsPaymentModalOpen(true);
     } catch (err: any) {
@@ -87,24 +92,36 @@ export const Cart: React.FC = () => {
     }
   };
 
-  const handlePaymentSuccess = async (paymentId: string, signature: string) => {
+  const handlePaymentSuccess = async (data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+  }) => {
     if (!paymentDetails) return;
+    const targetOrderId = paymentDetails.orderId;
 
     try {
-      // 3. Verify signature on backend
+      setIsProcessing(true);
+      // Verify payment signature on backend (or mock fallback)
       await api.verifyPayment({
-        order_id: paymentDetails.orderId,
-        razorpay_order_id: paymentDetails.razorpayOrderId,
-        razorpay_payment_id: paymentId,
-        razorpay_signature: signature,
+        order_id: targetOrderId,
+        razorpay_order_id: data.razorpay_order_id,
+        razorpay_payment_id: data.razorpay_payment_id,
+        razorpay_signature: data.razorpay_signature,
       });
 
-      // 4. Clear local cart & redirect
-      await clearCart();
+      // Clear local cart & redirect to order detail
+      try {
+        await clearCart();
+      } catch (cErr) {
+        console.warn('Cart clear non-fatal error:', cErr);
+      }
       setIsPaymentModalOpen(false);
-      navigate(`/orders/${paymentDetails.orderId}`);
+      navigate(`/orders/${targetOrderId}`);
     } catch (err: any) {
-      setError('Payment verification failed: ' + (err.message || 'Signature mismatch'));
+      setError('Payment verification failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -128,23 +145,26 @@ export const Cart: React.FC = () => {
         {/* Cart items list */}
         <div className="lg:col-span-8 space-y-4">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xs divide-y divide-slate-100">
-            {cart.map((item) => (
-              <div key={item.product.id} className="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {cart.map((item, idx) => {
+              const prod = item.product;
+              const unitPrice = prod?.price || 0;
+              return (
+              <div key={item.id || prod?.id || idx} className="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <img
-                    src={item.product.image_url}
-                    alt={item.product.name}
+                    src={prod?.image_url || '/placeholder.png'}
+                    alt={prod?.name || 'Agri Item'}
                     className="w-16 h-16 rounded-xl object-cover bg-slate-100 border border-slate-200 shrink-0"
                   />
                   <div>
                     <span className="text-[10px] font-bold text-emerald-700 uppercase bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      {item.product.category}
+                      {prod?.category || 'INPUTS'}
                     </span>
                     <h3 className="text-sm font-bold text-slate-900 line-clamp-1 mt-0.5">
-                      {item.product.name}
+                      {prod?.name || `Product #${item.product_id}`}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      ₹{item.product.price} per unit · Vendor: {item.product.vendor_name || 'Agri Vendor'}
+                      ₹{unitPrice} per unit · Vendor: {prod?.vendor_name || 'Agri Vendor'}
                     </p>
                   </div>
                 </div>
@@ -154,7 +174,7 @@ export const Cart: React.FC = () => {
                   <div className="flex items-center border border-slate-300 rounded-xl bg-slate-50 overflow-hidden shadow-2xs">
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.product.id, Math.max(1, item.quantity - 1))}
+                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                       className="px-2.5 py-1 text-slate-600 hover:bg-slate-200 font-bold text-xs cursor-pointer"
                     >
                       -
@@ -166,8 +186,8 @@ export const Cart: React.FC = () => {
                       type="button"
                       onClick={() =>
                         updateQuantity(
-                          item.product.id,
-                          Math.min(item.product.stock, item.quantity + 1)
+                          item.id,
+                          Math.min(prod?.stock ?? 999, item.quantity + 1)
                         )
                       }
                       className="px-2.5 py-1 text-slate-600 hover:bg-slate-200 font-bold text-xs cursor-pointer"
@@ -179,14 +199,14 @@ export const Cart: React.FC = () => {
                   {/* Line total */}
                   <div className="text-right min-w-[5rem]">
                     <span className="text-sm font-black text-slate-900">
-                      ₹{(item.product.price * item.quantity).toLocaleString('en-IN')}
+                      ₹{(unitPrice * item.quantity).toLocaleString('en-IN')}
                     </span>
                   </div>
 
                   {/* Delete button */}
                   <button
                     type="button"
-                    onClick={() => removeFromCart(item.product.id)}
+                    onClick={() => removeFromCart(item.id)}
                     className="text-slate-400 hover:text-rose-600 p-1.5 transition cursor-pointer"
                     title="Remove item"
                   >
@@ -194,7 +214,8 @@ export const Cart: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
 
           {/* Farm Delivery Address Input */}
@@ -276,8 +297,7 @@ export const Cart: React.FC = () => {
         <RazorpayCheckoutModal
           isOpen={isPaymentModalOpen}
           amount={paymentDetails.amount}
-          orderId={paymentDetails.orderId}
-          razorpayOrderId={paymentDetails.razorpayOrderId}
+          orderId={paymentDetails.razorpayOrderId}
           onSuccess={handlePaymentSuccess}
           onClose={() => setIsPaymentModalOpen(false)}
         />

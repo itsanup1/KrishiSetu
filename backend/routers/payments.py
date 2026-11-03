@@ -77,9 +77,12 @@ def verify_payment(
     order.razorpay_order_id = verify_in.razorpay_order_id
     order.razorpay_payment_id = verify_in.razorpay_payment_id
     db.commit()
+    db.refresh(order)
 
     return {
         "status": "success",
         "message": "Payment verified successfully",
         "order_id": order.id,
+        "order_status": order.status.value,
+        "razorpay_payment_id": order.razorpay_payment_id,
     }

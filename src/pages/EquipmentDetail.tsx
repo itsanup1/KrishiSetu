@@ -36,9 +36,9 @@ export const EquipmentDetail: React.FC = () => {
       const data = await api.getEquipmentById(parseInt(id, 10));
       setEquipment(data);
       // Fetch bookings for this equipment to display schedule transparency
-      const allBookings = await api.getAllBookings();
-      const thisEqBookings = allBookings.filter(
-        (b) => b.equipment_id === parseInt(id, 10) && (b.status === 'CONFIRMED' || b.status === 'CONFIRMATION_PENDING')
+      const eqBookings = await api.getEquipmentBookings(parseInt(id, 10));
+      const thisEqBookings = eqBookings.filter(
+        (b) => b.status === 'CONFIRMED' || b.status === 'CONFIRMATION_PENDING'
       );
       setActiveBookings(thisEqBookings);
     } catch (e) {

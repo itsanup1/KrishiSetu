@@ -43,7 +43,7 @@ def get_all_users(
     db: Session = Depends(get_db),
 ):
     users = db.query(User).order_by(User.created_at.desc()).all()
-    return [UserResponse.from_orm(u) for u in users]
+    return [UserResponse.model_validate(u) for u in users]
 
 @router.get("/orders", response_model=List[OrderResponse])
 def get_all_orders(
@@ -53,7 +53,7 @@ def get_all_orders(
     orders = db.query(Order).order_by(Order.created_at.desc()).all()
     results = []
     for o in orders:
-        resp = OrderResponse.from_orm(o)
+        resp = OrderResponse.model_validate(o)
         if o.farmer:
             resp.farmer_name = o.farmer.name
         results.append(resp)

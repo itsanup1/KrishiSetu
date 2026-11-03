@@ -2,8 +2,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database import get_db
-from backend.models import Equipment, EquipmentType, User, UserRole
-from backend.schemas import EquipmentCreate, EquipmentUpdate, EquipmentResponse
+from backend.models import Equipment, EquipmentType, User, UserRole, BookingRequest, BookingStatus
+from backend.schemas import EquipmentCreate, EquipmentUpdate, EquipmentResponse, BookingResponse
 from backend.auth import get_current_user
 
 router = APIRouter(prefix="/api/equipment", tags=["Farm Equipment"])
@@ -27,7 +27,7 @@ def get_equipment(
     equipment_list = query.order_by(Equipment.created_at.desc()).all()
     results = []
     for eq in equipment_list:
-        resp = EquipmentResponse.from_orm(eq)
+        resp = EquipmentResponse.model_validate(eq)
         if eq.owner:
             resp.owner_name = eq.owner.name
             resp.owner_phone = eq.owner.phone
@@ -40,18 +40,42 @@ def get_my_equipment(
     db: Session = Depends(get_db),
 ):
     equipment_list = db.query(Equipment).filter(Equipment.owner_id == current_user.id).all()
-    return [EquipmentResponse.from_orm(eq) for eq in equipment_list]
+    return [EquipmentResponse.model_validate(eq) for eq in equipment_list]
 
 @router.get("/{id}", response_model=EquipmentResponse)
 def get_equipment_by_id(id: int, db: Session = Depends(get_db)):
     eq = db.query(Equipment).filter(Equipment.id == id).first()
     if not eq:
         raise HTTPException(status_code=404, detail="Equipment machinery not found")
-    resp = EquipmentResponse.from_orm(eq)
+    resp = EquipmentResponse.model_validate(eq)
     if eq.owner:
         resp.owner_name = eq.owner.name
         resp.owner_phone = eq.owner.phone
     return resp
+
+@router.get("/{id}/bookings", response_model=List[BookingResponse])
+def get_equipment_bookings(id: int, db: Session = Depends(get_db)):
+    eq = db.query(Equipment).filter(Equipment.id == id).first()
+    if not eq:
+        raise HTTPException(status_code=404, detail="Equipment machinery not found")
+    bookings = (
+        db.query(BookingRequest)
+        .filter(
+            BookingRequest.equipment_id == id,
+            BookingRequest.status.in_([BookingStatus.CONFIRMED, BookingStatus.CONFIRMATION_PENDING]),
+        )
+        .order_by(BookingRequest.start_date.asc())
+        .all()
+    )
+    results = []
+    for b in bookings:
+        resp = BookingResponse.model_validate(b)
+        resp.equipment_name = eq.name
+        resp.equipment_location = eq.location
+        resp.farmer_name = "Booked Farmer"
+        resp.farmer_phone = None
+        results.append(resp)
+    return results
 
 @router.post("", response_model=EquipmentResponse, status_code=status.HTTP_201_CREATED)
 def create_equipment(
@@ -80,7 +104,7 @@ def create_equipment(
     db.commit()
     db.refresh(equipment)
 
-    resp = EquipmentResponse.from_orm(equipment)
+    resp = EquipmentResponse.model_validate(equipment)
     resp.owner_name = current_user.name
     resp.owner_phone = current_user.phone
     return resp
@@ -104,7 +128,7 @@ def update_equipment(
 
     db.commit()
     db.refresh(eq)
-    resp = EquipmentResponse.from_orm(eq)
+    resp = EquipmentResponse.model_validate(eq)
     resp.owner_name = current_user.name
     return resp
 

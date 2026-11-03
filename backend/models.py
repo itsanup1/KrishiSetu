@@ -90,6 +90,10 @@ class Product(Base):
     cart_items = relationship("CartItem", back_populates="product", cascade="all, delete-orphan")
     order_items = relationship("OrderItem", back_populates="product")
 
+    @property
+    def vendor_name(self) -> str:
+        return self.vendor.name if self.vendor else "Agri Vendor"
+
 class CartItem(Base):
     __tablename__ = "cart_items"
 
@@ -147,6 +151,14 @@ class Equipment(Base):
     owner = relationship("User", back_populates="equipment")
     bookings = relationship("BookingRequest", back_populates="equipment", cascade="all, delete-orphan")
 
+    @property
+    def owner_name(self) -> str:
+        return self.owner.name if self.owner else "Equipment Owner"
+
+    @property
+    def owner_phone(self) -> str:
+        return self.owner.phone if self.owner else ""
+
 class BookingRequest(Base):
     __tablename__ = "booking_requests"
 
@@ -162,3 +174,19 @@ class BookingRequest(Base):
 
     farmer = relationship("User", back_populates="bookings")
     equipment = relationship("Equipment", back_populates="bookings")
+
+    @property
+    def farmer_name(self) -> str:
+        return self.farmer.name if self.farmer else "Farmer"
+
+    @property
+    def farmer_phone(self) -> str:
+        return self.farmer.phone if self.farmer else ""
+
+    @property
+    def equipment_name(self) -> str:
+        return self.equipment.name if self.equipment else "Equipment"
+
+    @property
+    def equipment_location(self) -> str:
+        return self.equipment.location if self.equipment else ""

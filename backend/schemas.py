@@ -22,6 +22,13 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    is_equipment_owner: Optional[bool] = None
+    password: Optional[str] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -79,6 +86,11 @@ class CartItemResponse(BaseModel):
         from_attributes = True
 
 # Order Schemas
+class OrderItemCreate(BaseModel):
+    product_id: int
+    quantity: int
+    price_at_purchase: Optional[float] = None
+
 class OrderItemResponse(BaseModel):
     id: int
     product_id: int
@@ -93,6 +105,7 @@ class OrderCreate(BaseModel):
     delivery_address: str
     razorpay_order_id: Optional[str] = None
     razorpay_payment_id: Optional[str] = None
+    items: Optional[List[OrderItemCreate]] = None
 
 class OrderUpdateStatus(BaseModel):
     status: OrderStatus

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.database import get_db
 from backend.models import User, UserRole
-from backend.schemas import UserCreate, UserResponse, Token, LoginRequest
+from backend.schemas import UserCreate, UserUpdate, UserResponse, Token, LoginRequest
 from backend.auth import get_password_hash, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -65,4 +65,25 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+@router.put("/me", response_model=UserResponse)
+def update_me(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if user_update.name is not None and user_update.name.strip():
+        current_user.name = user_update.name.strip()
+    if user_update.phone is not None and user_update.phone.strip():
+        current_user.phone = user_update.phone.strip()
+    if user_update.location is not None and user_update.location.strip():
+        current_user.location = user_update.location.strip()
+    if user_update.is_equipment_owner is not None:
+        current_user.is_equipment_owner = user_update.is_equipment_owner
+    if user_update.password and user_update.password.strip():
+        current_user.hashed_password = get_password_hash(user_update.password.strip())
+
+    db.commit()
+    db.refresh(current_user)
     return current_user
