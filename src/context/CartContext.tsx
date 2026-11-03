@@ -75,6 +75,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearCart = async () => {
+<<<<<<< HEAD
     try {
       setIsLoading(true);
       await api.clearCart();
@@ -85,6 +86,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
+=======
+    setCart([]);
+    await refreshCart();
+>>>>>>> 3d189fbcd7a35f20565ff5c523577f33c19fe422
   };
 
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -119,3 +124,4 @@ export const useCart = () => {
   }
   return context;
 };
+

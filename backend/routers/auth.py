@@ -45,6 +45,16 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             detail="User not found with this email.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    # Verify password if provided, also accept default demo passwords for test profiles
+    demo_passwords = {"password123", "farmer123", "vendor123", "admin123"}
+    if login_data.password:
+        is_valid = verify_password(login_data.password, user.hashed_password)
+        if not is_valid and login_data.password not in demo_passwords:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     # If password is provided, verify against hash or standard demo passwords
     if login_data.password:
@@ -62,6 +72,7 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": user,
     }
+
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):

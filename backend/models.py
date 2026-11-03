@@ -61,7 +61,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     phone = Column(String(30), nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.FARMER, nullable=False)
+    role = Column(Enum(UserRole, native_enum=False), default=UserRole.FARMER, nullable=False)
     is_equipment_owner = Column(Boolean, default=False, nullable=False)
     location = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -79,12 +79,14 @@ class Product(Base):
     id = Column(Integer, primary_key=True, index=True)
     vendor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String(255), index=True, nullable=False)
-    category = Column(Enum(ProductCategory), nullable=False, index=True)
+    category = Column(Enum(ProductCategory, native_enum=False), nullable=False, index=True)
     description = Column(Text, nullable=False)
     price = Column(Float, nullable=False)
     stock = Column(Integer, default=0, nullable=False)
+    availability_status = Column(String(50), default="IN_STOCK", nullable=False)
     image_url = Column(String(500), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     vendor = relationship("User", back_populates="products")
     cart_items = relationship("CartItem", back_populates="product", cascade="all, delete-orphan")
@@ -112,11 +114,12 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     farmer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     total_amount = Column(Float, nullable=False)
-    status = Column(Enum(OrderStatus), default=OrderStatus.PLACED, nullable=False)
-    delivery_address = Column(String(500), nullable=False)
+    status = Column(Enum(OrderStatus, native_enum=False), default=OrderStatus.PLACED, nullable=False)
+    delivery_address = Column(String(500), nullable=False, default="Registered Farm Address")
     razorpay_order_id = Column(String(255), nullable=True)
     razorpay_payment_id = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     farmer = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
@@ -139,14 +142,17 @@ class Equipment(Base):
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String(255), index=True, nullable=False)
-    type = Column(Enum(EquipmentType), nullable=False, index=True)
+    type = Column(Enum(EquipmentType, native_enum=False), nullable=False, index=True)
     description = Column(Text, nullable=False)
     specifications = Column(Text, nullable=False)
     rate = Column(Float, nullable=False)
-    rate_unit = Column(Enum(RateUnit), default=RateUnit.HOUR, nullable=False)
+    rate_unit = Column(Enum(RateUnit, native_enum=False), default=RateUnit.HOUR, nullable=False)
     location = Column(String(255), nullable=False, index=True)
+    stock_quantity = Column(Integer, default=1, nullable=False)
+    availability_status = Column(String(50), default="AVAILABLE", nullable=False)
     image_url = Column(String(500), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     owner = relationship("User", back_populates="equipment")
     bookings = relationship("BookingRequest", back_populates="equipment", cascade="all, delete-orphan")
@@ -167,14 +173,16 @@ class BookingRequest(Base):
     equipment_id = Column(Integer, ForeignKey("equipment.id"), nullable=False)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
-    status = Column(Enum(BookingStatus), default=BookingStatus.CONFIRMATION_PENDING, nullable=False, index=True)
+    status = Column(Enum(BookingStatus, native_enum=False), default=BookingStatus.CONFIRMATION_PENDING, nullable=False, index=True)
     queue_position = Column(Integer, nullable=True)
     confirmation_deadline = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     farmer = relationship("User", back_populates="bookings")
     equipment = relationship("Equipment", back_populates="bookings")
 
+<<<<<<< HEAD
     @property
     def farmer_name(self) -> str:
         return self.farmer.name if self.farmer else "Farmer"
@@ -190,3 +198,5 @@ class BookingRequest(Base):
     @property
     def equipment_location(self) -> str:
         return self.equipment.location if self.equipment else ""
+=======
+>>>>>>> 3d189fbcd7a35f20565ff5c523577f33c19fe422
